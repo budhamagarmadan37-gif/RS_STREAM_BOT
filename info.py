@@ -27,10 +27,11 @@ LOG_CHANNEL = int(environ.get('LOG_CHANNEL', '-1003525738568'))
 ADMINS = [int(admin) if id_pattern.search(admin) else admin for admin in environ.get('ADMINS', '6621572366').split()]
 
 # MongoDB information
-DATABASE_URI = environ.get('DATABASE_URI', "Rahatmongodb+srv://RAHAT1132:RAHAT11a@rahat.txn4lkk.mongodb.net/?appName=Rahat")
+DATABASE_URI = environ.get('DATABASE_URI', "mongodb+srv://RAHAT1132:RAHAT11a@rahat.txn4lkk.mongodb.net/?appName=Rahat")
 DATABASE_NAME = environ.get('DATABASE_NAME', "rs_fllink_bot")
 
 # Shortlink Info
 SHORTLINK = bool(environ.get('SHORTLINK', False)) # Set True Or False
 SHORTLINK_URL = environ.get('SHORTLINK_URL', 'api.shareus.io')
 SHORTLINK_API = environ.get('SHORTLINK_API', 'hRPS5vvZc0OGOEUQJMJzPiojoVK2')
+import
