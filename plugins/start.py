@@ -1,86 +1,88 @@
-import random
+# ================= IMPORTS =================
+
 import humanize
 from Script import script
 from pyrogram import filters, enums
 from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup
-from info import URL, LOG_CHANNEL, SHORTLINK
 from urllib.parse import quote_plus
+
+from TechVJ.bot import TechVJBot
 from TechVJ.util.file_properties import get_name, get_hash, get_media_file_size
 from TechVJ.util.human_readable import humanbytes
+
+from info import URL, LOG_CHANNEL
 from database.users_chats_db import db
-from utils import temp, get_shortlink
-from TechVJ.bot import TechVJBot
+from utils import temp
 
 
-# ================= START =================
+# ================= /START =================
 
 @TechVJBot.on_message(filters.command("start") & filters.private)
 async def start(client, message):
+
     if not await db.is_user_exist(message.from_user.id):
         await db.add_user(message.from_user.id, message.from_user.first_name)
         await client.send_message(
             LOG_CHANNEL,
-            script.LOG_TEXT_P.format(message.from_user.id, message.from_user.mention)
+            script.LOG_TEXT_P.format(
+                message.from_user.id,
+                message.from_user.mention
+            )
         )
 
-    rm = InlineKeyboardMarkup(
-        [[InlineKeyboardButton("✨ Update Channel", url="https://t.me/CARTOONFUNNY03")]]
+    buttons = InlineKeyboardMarkup(
+        [[InlineKeyboardButton("✨ Update Channel", url="https://t.me/cartoonfunny03")]]
     )
 
-    await client.send_message(
-        chat_id=message.from_user.id,
-        text=script.START_TXT.format(message.from_user.mention, temp.U_NAME, temp.B_NAME),
-        reply_markup=rm,
+    await message.reply_text(
+        text=script.START_TXT.format(
+            message.from_user.mention,
+            temp.U_NAME,
+            temp.B_NAME
+        ),
+        reply_markup=buttons,
         parse_mode=enums.ParseMode.HTML
     )
 
 
-# ================= STREAM =================
+# ================= VIDEO / DOCUMENT =================
 
-@TechVJBot.on_message(filters.private & (filters.document | filters.video))
+@TechVJBot.on_message(filters.private & (filters.video | filters.document))
 async def stream_start(client, message):
 
     try:
-        # ✅ FIX: correct media access
+        # ✅ Correct media access (Pyrogram v2)
         file = message.video or message.document
         if not file:
             return
 
-        filename = file.file_name
-        filesize = humanize.naturalsize(file.file_size)
-        fileid = file.file_id
-        user_id = message.from_user.id
-        username = message.from_user.mention
+        status = await message.reply_text("⏳ Processing your file...")
 
         # send to log channel
         log_msg = await client.send_cached_media(
             chat_id=LOG_CHANNEL,
-            file_id=fileid
+            file_id=file.file_id
         )
 
-        # ✅ FIX: string, not set
-        fileName = quote_plus(get_name(log_msg))
+        # file info
+        file_name = get_name(log_msg)
+        safe_name = quote_plus(file_name)
+        file_size = humanbytes(get_media_file_size(message))
+        user_id = message.from_user.id
+        username = message.from_user.mention
 
-        # generate links
-        if not SHORTLINK:
-            stream = f"{URL}watch/{str(log_msg.id)}/{fileName}?hash={get_hash(log_msg)}"
-            download = f"{URL}{str(log_msg.id)}/{fileName}?hash={get_hash(log_msg)}"
-        else:
-            stream = await get_shortlink(
-                f"{URL}watch/{str(log_msg.id)}/{fileName}?hash={get_hash(log_msg)}"
-            )
-            download = await get_shortlink(
-                f"{URL}{str(log_msg.id)}/{fileName}?hash={get_hash(log_msg)}"
-            )
+        # ✅ DIRECT LINKS (NO SHORTLINK, NO API)
+        stream = f"{URL}watch/{log_msg.id}/{safe_name}?hash={get_hash(log_msg)}"
+        download = f"{URL}{log_msg.id}/{safe_name}?hash={get_hash(log_msg)}"
 
-        # reply in log channel
+        # log channel reply
         await log_msg.reply_text(
             text=(
-                f"•• ʟɪɴᴋ ɢᴇɴᴇʀᴀᴛᴇᴅ ꜰᴏʀ ɪᴅ #{user_id}\n"
-                f"•• ᴜꜱᴇʀɴᴀᴍᴇ : {username}\n\n"
-                f"•• ᖴᎥᒪᗴ Nᗩᗰᗴ : {fileName}"
+                f"•• LINK GENERATED\n"
+                f"•• USER ID : {user_id}\n"
+                f"•• USERNAME : {username}\n\n"
+                f"•• FILE : {file_name}"
             ),
-            quote=True,
             disable_web_page_preview=True,
             reply_markup=InlineKeyboardMarkup(
                 [[
@@ -91,35 +93,28 @@ async def stream_start(client, message):
         )
 
         # user buttons
-        rm = InlineKeyboardMarkup(
+        user_buttons = InlineKeyboardMarkup(
             [[
-                InlineKeyboardButton("sᴛʀᴇᴀᴍ 🖥", url=stream),
-                InlineKeyboardButton("ᴅᴏᴡɴʟᴏᴀᴅ 📥", url=download)
+                InlineKeyboardButton("🖥 Stream", url=stream),
+                InlineKeyboardButton("📥 Download", url=download)
             ]]
         )
 
-        msg_text = (
-            "<i><u>𝗬𝗼𝘂𝗿 𝗟𝗶𝗻𝗸 𝗚𝗲𝗻𝗲𝗿𝗮𝘁𝗲𝗱 !</u></i>\n\n"
-            "<b>📂 Fɪʟᴇ ɴᴀᴍᴇ :</b> <i>{}</i>\n\n"
-            "<b>📦 Fɪʟᴇ ꜱɪᴢᴇ :</b> <i>{}</i>\n\n"
-            "<b>📥 Dᴏᴡɴʟᴏᴀᴅ :</b> <i>{}</i>\n\n"
-            "<b>🖥 ᴡᴀᴛᴄʜ :</b> <i>{}</i>\n\n"
-            "<b>🚸 Nᴏᴛᴇ : ʟɪɴᴋ ᴡᴏɴ'ᴛ ᴇxᴘɪʀᴇ ᴛɪʟʟ ɪ ᴅᴇʟᴇᴛᴇ</b>"
+        text = (
+            "<b>✅ Your Link Generated!</b>\n\n"
+            f"<b>📂 File :</b> <i>{file_name}</i>\n\n"
+            f"<b>📦 Size :</b> <i>{file_size}</i>\n\n"
+            f"<b>🖥 Watch :</b>\n{stream}\n\n"
+            f"<b>📥 Download :</b>\n{download}\n\n"
+            "<b>🚸 Note :</b> Link will not expire unless deleted."
         )
 
-        await message.reply_text(
-            text=msg_text.format(
-                get_name(log_msg),
-                humanbytes(get_media_file_size(message)),
-                download,
-                stream
-            ),
-            quote=True,
-            disable_web_page_preview=True,
-            reply_markup=rm
+        await status.edit_text(
+            text=text,
+            reply_markup=user_buttons,
+            disable_web_page_preview=True
         )
 
     except Exception as e:
-        # 🔥 DEBUG (future problem catch)
-        await message.reply_text(f"❌ ERROR:\n{e}")
+        await message.reply_text(f"❌ ERROR:\n<code>{e}</code>")
         print(e)
