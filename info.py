@@ -23,7 +23,7 @@ else:
 URL = "https://rs-stream-bot.onrender.com/"
 
 # Admins, Channels & Users
-LOG_CHANNEL = int(environ.get('LOG_CHANNEL', '-1003525738568'))
+LOG_CHANNEL = int(environ.get('LOG_CHANNEL', '-1003504080537'))
 ADMINS = [6621572366]
 
 # MongoDB information
