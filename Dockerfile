@@ -16,4 +16,10 @@ WORKDIR /FileToLink
 
 COPY . /FileToLink
 
+# Port expose (আপনার bot PORT variable ব্যবহার করে)
+EXPOSE 8080
+
+# Environment variable হিসেবে PORT সেট করুন
+ENV PORT=8080
+
 CMD ["python", "bot.py"]
