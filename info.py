@@ -28,7 +28,7 @@ ADMINS = [6621572366] #replace with your ID
 
 # MongoDB information
 DATABASE_URI = environ.get('DATABASE_URI', "") #mongo DB URL
-DATABASE_NAME = environ.get('DATABASE_NAME', "rs_fllink_bot"
+DATABASE_NAME = environ.get('DATABASE_NAME', "rs_fllink_bot")
 
 # Shortlink Info
 SHORTLINK = "False" # Set True Or False
